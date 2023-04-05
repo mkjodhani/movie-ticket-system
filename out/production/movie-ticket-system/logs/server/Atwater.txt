@@ -1,0 +1,24 @@
+Apr 04, 2023 10:25:04 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Outremont at 7253 port
+Apr 04, 2023 10:25:04 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Atwater at 7251 port
+Apr 04, 2023 10:25:04 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Verdun at 7252 port
+Apr 04, 2023 10:27:45 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Outremont at 7253 port
+Apr 04, 2023 10:27:45 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Atwater at 7251 port
+Apr 04, 2023 10:27:45 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Verdun at 7252 port
+Apr 04, 2023 10:29:16 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Atwater at 7251 port
+Apr 04, 2023 10:29:16 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Verdun at 7252 port
+Apr 04, 2023 10:29:16 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Outremont at 7253 port
+Apr 04, 2023 10:35:02 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Atwater at 7251 port
+Apr 04, 2023 10:35:02 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Outremont at 7253 port
+Apr 04, 2023 10:35:02 PM com.replica.theatre.Theatre run
+INFO: UDP server started to listen request for Verdun at 7252 port
