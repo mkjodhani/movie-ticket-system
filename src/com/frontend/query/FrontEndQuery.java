@@ -1,5 +1,6 @@
 package com.frontend.query;
 
+import com.frontend.Frontend;
 import com.frontend.registry.CentralRepository;
 import com.shared.Config;
 
@@ -15,21 +16,10 @@ import java.util.regex.Pattern;
  * @since 17/03/23
  */
 public class FrontEndQuery implements Runnable {
-
     String query;
     int totalReplica;
-    private DatagramSocket frontEndSocket;
     private static final Pattern replicaResponse = Pattern.compile("^(\\d+,)([\\w\\W]+)$");
-
     private String queryResponse;
-
-    public DatagramSocket getFrontEndSocket() throws SocketException {
-        if (frontEndSocket == null) {
-            frontEndSocket = new DatagramSocket(Config.FrontendPort);
-        }
-        return frontEndSocket;
-    }
-
     public FrontEndQuery(String query) throws SocketException {
         CentralRepository centralRepository = CentralRepository.getCentralRepository();
         this.totalReplica = centralRepository.getTotalReplica();
@@ -41,7 +31,7 @@ public class FrontEndQuery implements Runnable {
         try {
             DatagramPacket datagramPacket = new DatagramPacket(query.getBytes(), query.length(),
                     Inet4Address.getLocalHost(), Config.sequencerPort);
-            getFrontEndSocket().send(datagramPacket);
+            Frontend.frontEndSocket.send(datagramPacket);
             queryResponse = getResponse();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -53,12 +43,14 @@ public class FrontEndQuery implements Runnable {
         HashMap<String, Integer> answerCount = new HashMap<>();
         HashMap<Integer, String> answerMap = new HashMap<>();
         int max = 0;
+        System.out.println("responsesTotal;"+responses.length);
         String maxRepeatedRes = "";
         for (int i = 0; i < responses.length; i++) {
             byte[] array = new byte[1024];
             DatagramPacket datagramPacket = new DatagramPacket(array, array.length);
-            getFrontEndSocket().receive(datagramPacket);
+            Frontend.frontEndSocket.receive(datagramPacket);
             String res = new String(datagramPacket.getData(), 0, datagramPacket.getLength());
+            System.out.println("getResponse:"+res);
             // TODO get row answer ans compare to other replica answer
             // GET REPLICA ID PUT THE MAPPING IN answerMap
             answerMap.put(getReplicaIdFromResponse(res), getRawDataFromResponse(res));

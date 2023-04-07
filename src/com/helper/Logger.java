@@ -15,22 +15,22 @@ import java.util.logging.SimpleFormatter;
 public class Logger {
     public static java.util.logging.Logger getLogger(String fileName, boolean debugLogs) {
         java.util.logging.Logger LOGGER = null;
-        FileHandler fileHandler = null;
-        String logFilePath = "";
-        if (debugLogs) {
-            logFilePath = System.getProperty("user.dir") + "/src/logs/server/" + fileName + ".txt";
-        } else {
-            logFilePath = System.getProperty("user.dir") + "/src/logs/client/" + fileName + ".txt";
-        }
-        try {
-            LOGGER = java.util.logging.Logger.getLogger(Logger.class.getName());
-            fileHandler = new FileHandler(logFilePath, true);
-            fileHandler.setFormatter(new SimpleFormatter());
-            LOGGER.setUseParentHandlers(debugLogs);
-            LOGGER.addHandler(fileHandler);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        FileHandler fileHandler = null;
+//        String logFilePath = "";
+//        if (debugLogs) {
+//            logFilePath = System.getProperty("user.dir") + "/src/logs/server/" + fileName + ".txt";
+//        } else {
+//            logFilePath = System.getProperty("user.dir") + "/src/logs/client/" + fileName + ".txt";
+//        }
+        LOGGER = java.util.logging.Logger.getLogger(Logger.class.getName());
+//        try {
+//            fileHandler = new FileHandler(logFilePath, true);
+//            fileHandler.setFormatter(new SimpleFormatter());
+//            LOGGER.setUseParentHandlers(debugLogs);
+//            LOGGER.addHandler(fileHandler);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
         return LOGGER;
     }
 

@@ -15,9 +15,9 @@ import javax.jws.WebService;
 public class AdminImpl implements Admin {
     @Override
     public String addMovieSlots(String movieID, String movieName, int bookingCapacity) {
+        System.out.println("addMovieSlots");
         try {
             String command = Commands.getAddMovieSlotsCommand(movieID, movieName, bookingCapacity);
-            System.out.println("FRONT END SIDE:"+command);
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
@@ -31,6 +31,7 @@ public class AdminImpl implements Admin {
     @Override
     public String removeMovieSlots(String movieID, String movieName) {
         try {
+            System.out.println("removeMovieSlots");
             String command = Commands.getRemoveMovieSlotCommand(movieID, movieName);
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);

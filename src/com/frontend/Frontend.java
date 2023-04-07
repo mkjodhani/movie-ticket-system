@@ -6,6 +6,7 @@ import com.frontend.services.impl.CustomerImpl;
 import com.shared.Config;
 
 import javax.xml.ws.Endpoint;
+import java.net.DatagramSocket;
 import java.net.SocketException;
 
 /**
@@ -14,13 +15,16 @@ import java.net.SocketException;
  * @project Movie Ticket System
  * @since 17/03/23
  */
-public class Main {
+public class Frontend {
+    public static DatagramSocket frontEndSocket;
+
     public static void main(String[] args) throws SocketException {
+        frontEndSocket = new DatagramSocket(Config.frontendUDPPort);
         // WEB SERVICE running
-        String localhost = String.format("http://localhost:%d/movie-service", Config.FrontendPort);
+        CentralRepository centralRepository = CentralRepository.getCentralRepository();
+        String localhost = String.format("http://localhost:%d/movie-service", Config.frontendWebPort);
         Endpoint.publish(localhost + "/admin", new AdminImpl());
         Endpoint.publish(localhost + "/customer", new CustomerImpl());
-        CentralRepository centralRepository = CentralRepository.getCentralRepository();
 //        centralRepository.startUDPListener();
     }
 }
