@@ -1,6 +1,6 @@
 package com.sequencer;
 
-import com.shared.Config;
+import com.helper.Config;
 
 /**
  * @author mkjodhani

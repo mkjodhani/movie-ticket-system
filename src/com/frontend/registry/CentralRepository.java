@@ -1,7 +1,6 @@
 package com.frontend.registry;
 
 import com.helper.Commands;
-import com.shared.Config;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -16,7 +15,7 @@ import java.util.HashMap;
  * @since 11/03/23
  */
 public class CentralRepository {
-    private HashMap<Integer, ReplicaMetadata> replicaServers;
+    private HashMap<String, ReplicaMetadata> replicaServers;
     private DatagramSocket frontEndSocket = null;
     private static CentralRepository centralRepository;
 
@@ -32,11 +31,12 @@ public class CentralRepository {
         return centralRepository;
     }
 
-    public ReplicaMetadata getReplicaServer(int replicaID) {
+    public ReplicaMetadata getReplicaServer(String replicaID) {
         return replicaServers.getOrDefault(replicaID, null);
     }
 
-    public ReplicaMetadata addReplicaServer(ReplicaMetadata replica) {
+    public ReplicaMetadata addReplicaServer(String hostAddress,int port) {
+        ReplicaMetadata replica = new ReplicaMetadata(hostAddress,port,false);
         return replicaServers.put(replica.getId(), replica);
     }
 
@@ -61,34 +61,5 @@ public class CentralRepository {
 
     public DatagramSocket getFrontEndSocket() {
         return frontEndSocket;
-    }
-
-    public void startUDPListener() {
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        byte[] replyBytes = new byte[1024];
-                        DatagramPacket replyPacket = new DatagramPacket(replyBytes, replyBytes.length);
-                        frontEndSocket.receive(replyPacket);
-                        String reply = new String(replyPacket.getData(), 0, replyPacket.getLength());
-                        String[] params = Commands.generateParamsFromCommand(reply);
-                        // TODO handle AKG message
-                        System.out.println("Packet:"+reply);
-                        String hostAddress = params[1];
-                        int port = Integer.valueOf(params[2]);
-                        System.out.println(hostAddress + "::" + port);
-                        String initResponse = Commands.getAKFReplicaCommand(hostAddress, port);
-                        DatagramPacket sendPacket = new DatagramPacket(initResponse.getBytes(), initResponse.length(),
-                                Inet4Address.getByName(hostAddress), port);
-                        frontEndSocket.send(sendPacket);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        };
-        thread.start();
     }
 }

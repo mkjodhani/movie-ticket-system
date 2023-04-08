@@ -89,7 +89,7 @@ public class AdminService implements Admin {
                             String remoteResponse = null;
                             try {
                                 Message remoteMessage = Message.generateMessageFromString(Query
-                                        .executeCommandByServerPrefix(Commands.listMovieShowsAvailability(movieName),
+                                        .executeCommandByServerPrefix(Commands.getListMovieShowsAvailabilityCommand(movieName),
                                                 Role.getLocationPrefix(prefix)));
                                 remoteResponse = remoteMessage.extractMessage();
                                 if (!remoteResponse.equals("")) {

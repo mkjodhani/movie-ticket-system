@@ -1,7 +1,5 @@
 package com.frontend.registry;
-
 import com.helper.Commands;
-
 import java.net.*;
 
 /**
@@ -13,13 +11,14 @@ import java.net.*;
 public class ReplicaMetadata {
     private int totalReplica = 0;
     String hostAddress;
-    int port, id, lifeline;
+    int port, lifeline;
+    String id;
     boolean active;
 
     public ReplicaMetadata(String hostAddress, int port, boolean active) {
         this.hostAddress = hostAddress;
         this.port = port;
-        this.id = ++totalReplica;
+        this.id = String.format("%s:%d",hostAddress,port);
         this.active = active;
         this.lifeline = 3;
     }
@@ -48,11 +47,11 @@ public class ReplicaMetadata {
         this.active = active;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

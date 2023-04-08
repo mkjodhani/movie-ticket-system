@@ -13,6 +13,9 @@ import java.net.UnknownHostException;
 public class Commands {
     public static final String INT_SERVER = "INT_SERVER";
     public static final String AKG_INIT_SERVER = "AKG_INIT_SERVER";
+    public static final String READY_TO_EXECUTE = "READY_TO_EXECUTE";
+    public static final String HEART_BEAT = "HEART_BEAT";
+    public static final String AKG_HEART_BEAT = "AKG_HEART_BEAT";
     public static final String RESTART_SERVER_REPLICA = "RESTART_SERVER_REPLICA";
     public static final String ADD_MOVIE_SLOT = "ADD_MOVIE_SLOT";
     public static final String REMOVE_MOVIE_SLOT = "REMOVE_MOVIE_SLOT";
@@ -40,9 +43,18 @@ public class Commands {
         String[] args = new String[] { INT_SERVER, hostAddress, String.valueOf(port) };
         return Commands.generateCommandFromParams(args);
     }
+    public static final String getHeartBeatCommand(int port) throws UnknownHostException {
+        String hostAddress = Inet4Address.getLocalHost().getHostAddress();
+        String[] args = new String[] { HEART_BEAT, hostAddress, String.valueOf(port) };
+        return Commands.generateCommandFromParams(args);
+    }
+    public static final String getAkgHeartBeatCommand() throws UnknownHostException {
+        String[] args = new String[] { AKG_HEART_BEAT};
+        return Commands.generateCommandFromParams(args);
+    }
 
-    public static final String getAKFReplicaCommand(String hostAddress, int port) {
-        String[] args = new String[] { AKG_INIT_SERVER, hostAddress, String.valueOf(port) };
+    public static final String getAKFReplicaCommand() {
+        String[] args = new String[] { AKG_INIT_SERVER };
         return Commands.generateCommandFromParams(args);
     }
 
@@ -57,10 +69,6 @@ public class Commands {
     }
 
     // ADMIN COMMANDS
-    public static final String getAddMovieSlotsCommand(String movieID, String movieName, int bookingCapacity) {
-        String[] args = new String[] { ADD_MOVIE_SLOT, movieID, movieName, String.valueOf(bookingCapacity) };
-        return Commands.generateCommandFromParams(args);
-    }
 
     public static final String getRemoveMovieSlotCommand(String movieID, String movieName) {
         String[] args = new String[] { REMOVE_MOVIE_SLOT, movieID, movieName };
@@ -116,11 +124,6 @@ public class Commands {
 
     public static final String removeMovieSlots(String movieID, String movieName) {
         String[] args = new String[] { REMOVE_MOVIE_SLOT, movieID, movieName };
-        return Commands.generateCommandFromParams(args);
-    }
-
-    public static final String listMovieShowsAvailability(String movieName) {
-        String[] args = new String[] { LIST_MOVIE_AVAILABILITY, movieName };
         return Commands.generateCommandFromParams(args);
     }
 }

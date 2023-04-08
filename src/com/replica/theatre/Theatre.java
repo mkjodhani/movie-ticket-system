@@ -7,6 +7,7 @@
  */
 package com.replica.theatre;
 
+import com.replica.manager.ReplicaManager;
 import com.replica.theatre.movie.Movie;
 import com.replica.theatre.query.Query;
 import com.replica.theatre.web.Publisher;
@@ -24,8 +25,8 @@ public class Theatre implements Runnable {
     private Admin admin;
     private Customer customer;
 
-    public Theatre(int port, String location, String prefix) throws UnknownHostException, SocketException {
-        metaData = new TheatreMetaData(InetAddress.getLocalHost().getHostAddress(), location, prefix, port);
+    public Theatre(int port, String location, String prefix){
+        metaData = ReplicaManager.locationPorts.get(prefix);
         LOGGER = com.helper.Logger.getLogger(location, true);
     }
 
@@ -57,26 +58,21 @@ public class Theatre implements Runnable {
             e.printStackTrace();
         }
     }
-
     private void setInitialState() {
         String[] movieList = new String[] { "Avengers", "Avatar", "Titanic" };
         for (String movieName : movieList) {
             Movie.addMovie(movieName.toLowerCase(), this.metaData);
         }
     }
-
     public Admin getAdmin() {
         return admin;
     }
-
     public void setAdmin(Admin admin) {
         this.admin = admin;
     }
-
     public Customer getCustomer() {
         return customer;
     }
-
     public void setCustomer(Customer customer) {
         this.customer = customer;
     }

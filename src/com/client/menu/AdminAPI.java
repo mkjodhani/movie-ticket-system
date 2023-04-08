@@ -7,12 +7,9 @@
  */
 package com.client.menu;
 
-import com.helper.Commands;
-import com.helper.Input;
-import com.helper.Logger;
-import com.helper.Message;
+import com.helper.*;
 import com.shared.Admin;
-import com.shared.Config;
+import com.helper.Config;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
@@ -57,6 +54,10 @@ public class AdminAPI {
     public void addMovieSlots() {
         try {
             String movieId = Input.getMovieID();
+            if (!Role.getLocationPrefix(movieId).equals(Role.getLocationPrefix(this.adminID))){
+                System.out.println("You can not perform this operation at remote location.");
+                return;
+            }
             String movieName = Input.getString("Enter movie name :").toLowerCase();
             int capacity = Input.getInteger("Enter the capacity :");
             String response = admin.addMovieSlots(movieId, movieName, capacity);
@@ -76,6 +77,10 @@ public class AdminAPI {
     public void removeMovieSlots() {
         try {
             String movieId = Input.getMovieID();
+            if (!Role.getLocationPrefix(movieId).equals(Role.getLocationPrefix(this.adminID))){
+                System.out.println("You can not perform this operation at remote location.");
+                return;
+            }
             String movieName = Input.getString("Enter movie name :").toLowerCase();
             Message message = Message.generateMessageFromString(admin.removeMovieSlots(movieId, movieName));
             message.show();
@@ -94,13 +99,17 @@ public class AdminAPI {
     public void listMovieShowsAvailability() {
         try {
             String movieName = Input.getString("Enter movie name :").toLowerCase();
+            String response = admin.listMovieShowsAvailability(movieName);
+            System.out.println(response);
             String slots = Message.generateMessageFromString(admin.listMovieShowsAvailability(movieName))
                     .extractMessage();
             if (slots.equals("")) {
                 System.out.println("No slots found for " + movieName + ".");
             } else {
                 for (String slot : slots.split(Commands.DELIMITER)) {
-                    printMovieAvailability(slot);
+                    if (!slot.equals("")){
+                        printMovieAvailability(slot);
+                    }
                 }
             }
             LOGGER.info(

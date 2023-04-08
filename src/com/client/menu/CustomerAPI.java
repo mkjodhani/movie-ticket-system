@@ -11,7 +11,7 @@ import com.helper.Commands;
 import com.helper.Input;
 import com.helper.Logger;
 import com.helper.Message;
-import com.shared.Config;
+import com.helper.Config;
 import com.shared.Customer;
 
 import javax.xml.namespace.QName;

@@ -1,13 +1,10 @@
 package com.sequencer;
 
 import com.helper.Commands;
-import com.shared.Config;
+import com.helper.Config;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.*;
 import java.util.*;
 
 public class Sequencer implements Runnable{
@@ -37,13 +34,20 @@ public class Sequencer implements Runnable{
                 System.out.println("Listening");
                 DatagramPacket request = new DatagramPacket(buffer, buffer.length);
                 aSocket.receive(request);
-                String req = new String(request.getData(),0,request.getLength());
-                System.out.println(req+":Request");
-                String res = this.Connection(Config.rm1Port, Commands.generateCommandFromParams(new String[]{String.valueOf(seqId) , req}));
-                System.out.println(res+":Reply");
-                AckCounter.put(seqId, 0);
-                seqId++;
-                wait=false;
+                Thread thread = new Thread(() ->{
+                    String req = new String(request.getData(),0,request.getLength());
+                    System.out.println(req+":Request");
+                    try {
+                        this.Connection(InetAddress.getLocalHost().getHostName(),Config.rm1Port, Commands.generateCommandFromParams(new String[]{String.valueOf(seqId) , req}));
+                        this.Connection("192.168.0.157",Config.rm1Port, Commands.generateCommandFromParams(new String[]{String.valueOf(seqId) , req}));
+                        AckCounter.put(seqId, 0);
+                        seqId++;
+                        wait=false;
+                    } catch (UnknownHostException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                thread.start();
             }
         }catch (SocketException e){System.out.println("Socket: " + e.getMessage());
         }catch (IOException e) {System.out.println("IO: " + e.getMessage());
@@ -51,23 +55,16 @@ public class Sequencer implements Runnable{
         System.out.println("Thread " +  threadName + " exiting.");
     }
 
-    public static String Connection(int serverPort,String s){
+    public static String Connection(String hostAddress,int serverPort,String s){
         DatagramSocket aSocket = null;
         try {
             aSocket = new DatagramSocket();
-            InetAddress aHost = InetAddress.getByName(InetAddress.getLocalHost().getHostName());
+//            InetAddress aHost = InetAddress.getByName(InetAddress.getLocalHost().getHostName());
             byte [] m = s.getBytes();
             DatagramPacket request =
-                    new DatagramPacket(m,  s.length(), aHost, serverPort);
+                    new DatagramPacket(m,  s.length(), Inet4Address.getByName(hostAddress), serverPort);
             aSocket.send(request);
-            System.out.println("sent");
-            byte[] buffer = new byte[10000];
-            DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-            aSocket.receive(reply);
-            String response = new String (reply.getData(),0, reply.getLength());
-            System.out.println("recieved:"+response);
-            System.out.println(response);
-            return response;
+            System.out.println("send request to "+hostAddress+":"+serverPort);
         }catch (SocketException e){System.out.println("Socket: " + e.getMessage());
         }catch (IOException e){System.out.println("IO: " + e.getMessage());
         }finally {if(aSocket != null) aSocket.close();}

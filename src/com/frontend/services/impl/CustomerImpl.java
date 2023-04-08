@@ -22,9 +22,11 @@ public class CustomerImpl implements Customer {
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
-            thread.wait();
+            thread.join();
+            System.out.println("frontEndQuery.getQueryResponse()::"+frontEndQuery.getQueryResponse());
             return frontEndQuery.getQueryResponse();
         } catch (Exception e) {
+            e.printStackTrace();
             return Commands.getErrorCommand(e.getMessage());
         }
     }
@@ -37,9 +39,11 @@ public class CustomerImpl implements Customer {
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
-            thread.wait();
+            thread.join();
+            System.out.println("frontEndQuery.getQueryResponse()::"+frontEndQuery.getQueryResponse());
             return frontEndQuery.getQueryResponse();
         } catch (Exception e) {
+            e.printStackTrace();
             return Commands.getErrorCommand(e.getMessage());
         }
     }
@@ -52,9 +56,11 @@ public class CustomerImpl implements Customer {
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
-            thread.wait();
+            thread.join();
+            System.out.println("frontEndQuery.getQueryResponse()::"+frontEndQuery.getQueryResponse());
             return frontEndQuery.getQueryResponse();
         } catch (Exception e) {
+            e.printStackTrace();
             return Commands.getErrorCommand(e.getMessage());
         }
     }
@@ -67,9 +73,11 @@ public class CustomerImpl implements Customer {
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
-            thread.wait();
+            thread.join();
+            System.out.println("frontEndQuery.getQueryResponse()::"+frontEndQuery.getQueryResponse());
             return frontEndQuery.getQueryResponse();
         } catch (Exception e) {
+            e.printStackTrace();
             return Commands.getErrorCommand(e.getMessage());
         }
     }

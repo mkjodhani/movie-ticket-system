@@ -2,7 +2,8 @@ package com.frontend.query;
 
 import com.frontend.Frontend;
 import com.frontend.registry.CentralRepository;
-import com.shared.Config;
+import com.helper.Config;
+import com.helper.Message;
 
 import java.io.IOException;
 import java.net.*;
@@ -16,9 +17,9 @@ import java.util.regex.Pattern;
  * @since 17/03/23
  */
 public class FrontEndQuery implements Runnable {
-    String query;
+    private String query;
     int totalReplica;
-    private static final Pattern replicaResponse = Pattern.compile("^(\\d+,)([\\w\\W]+)$");
+    private static final Pattern replicaResponse = Pattern.compile("^(\\d+),((\\w+):::([\\w\\W]+))$");
     private String queryResponse;
     public FrontEndQuery(String query) throws SocketException {
         CentralRepository centralRepository = CentralRepository.getCentralRepository();
@@ -41,30 +42,32 @@ public class FrontEndQuery implements Runnable {
     private String getResponse() throws IOException {
         String[] responses = new String[CentralRepository.getCentralRepository().getTotalReplica()];
         HashMap<String, Integer> answerCount = new HashMap<>();
-        HashMap<Integer, String> answerMap = new HashMap<>();
+//        HashMap<String, > answerCount = new HashMap<>();
         int max = 0;
-        System.out.println("responsesTotal;"+responses.length);
         String maxRepeatedRes = "";
+        System.out.println("-----RES FROM DIFF REPLICA---------");
         for (int i = 0; i < responses.length; i++) {
             byte[] array = new byte[1024];
             DatagramPacket datagramPacket = new DatagramPacket(array, array.length);
-            Frontend.frontEndSocket.receive(datagramPacket);
-            String res = new String(datagramPacket.getData(), 0, datagramPacket.getLength());
-            System.out.println("getResponse:"+res);
-            // TODO get row answer ans compare to other replica answer
-            // GET REPLICA ID PUT THE MAPPING IN answerMap
-            answerMap.put(getReplicaIdFromResponse(res), getRawDataFromResponse(res));
-            // SET THE TOTAL COUNT + 1 in answerCount
-            answerCount.put(getRawDataFromResponse(res), answerCount.getOrDefault(getRawDataFromResponse(res), 0) + 1);
-            if (max < answerCount.get(getRawDataFromResponse(res))) {
-                // COMPARE TO max and update the value
-                max = answerCount.get(getRawDataFromResponse(res));
-                // ASSIGN the value if necessary maxRepeatedRes
-                maxRepeatedRes = getRawDataFromResponse(res);
-            } else {
-                break;
+            try {
+                Frontend.frontEndSocket.receive(datagramPacket);
+                String res = new String(datagramPacket.getData(), 0, datagramPacket.getLength());
+                System.out.println(res);
+                answerCount.put(getRawDataFromResponse(res), answerCount.getOrDefault(getRawDataFromResponse(res), 0) + 1);
+                if (max <= answerCount.getOrDefault(getRawDataFromResponse(res),0)) {
+                    // COMPARE TO max and update the value
+                    max = answerCount.get(getRawDataFromResponse(res));
+                    // ASSIGN the value if necessary maxRepeatedRes
+                    maxRepeatedRes = getRawDataFromResponse(res);
+                } else {
+                    break;
+                }
+            }
+            catch (SocketTimeoutException e){
+                System.out.println("Skipped due to timeout!!");
             }
         }
+        System.out.println("--------------");
         return maxRepeatedRes;
     }
 
@@ -72,7 +75,7 @@ public class FrontEndQuery implements Runnable {
         try {
             Matcher matcher = replicaResponse.matcher(response);
             if (matcher.find()) {
-                return Integer.valueOf(matcher.group(2));
+                return Integer.valueOf(matcher.group(1));
             }
         } catch (Exception e) {
             return -1;
@@ -84,14 +87,13 @@ public class FrontEndQuery implements Runnable {
         try {
             Matcher matcher = replicaResponse.matcher(response);
             if (matcher.find()) {
-                return matcher.group(4);
+                return matcher.group(2);
             }
         } catch (Exception e) {
             return "";
         }
         return "";
     }
-
     public String getQueryResponse() {
         return queryResponse;
     }
