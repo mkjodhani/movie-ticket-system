@@ -69,7 +69,7 @@ public class CustomerImpl implements Customer {
     public String cancelMovieTickets(String customerID, String movieID, String movieName, int numberOfTickets) {
         try {
             System.out.println("cancelMovieTickets");
-            String command = Commands.getListMovieShowsAvailabilityCommand(movieName);
+            String command = Commands.getCancelMovieTicketsCommand(customerID,movieID,movieName,numberOfTickets);
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
