@@ -27,9 +27,9 @@ public class Frontend {
 //        frontEndSocket.setSoTimeout(100);
         // WEB SERVICE running
         CentralRepository centralRepository = CentralRepository.getCentralRepository();
-
-        centralRepository.addReplicaServer(Config.rm1HostAddress,Config.rm1Port);
-        centralRepository.addReplicaServer(Inet4Address.getLocalHost().getHostAddress(),Config.rm1Port);
+        for (String replicaHostAddress: Config.replicas){
+            centralRepository.addReplicaServer(replicaHostAddress,Config.rm1Port);
+        }
 
         String localhost = String.format("http://localhost:%d/movie-service", Config.frontendWebPort);
         Endpoint.publish(localhost + "/admin", new AdminImpl());
@@ -64,8 +64,10 @@ public class Frontend {
                             case Commands.HEART_BEAT:
                                 replicaID = String.format("%s:%s",requestParams[1],requestParams[2]);
                                 ReplicaMetadata replica = CentralRepository.getCentralRepository().getReplicaServer(replicaID);
-                                replica.setActive(true);
-                                response = Commands.getAkgHeartBeatCommand();
+                                if (replica !=null){
+                                    replica.setActive(true);
+                                    response = Commands.getAkgHeartBeatCommand();
+                                }
                                 break;
                         }
                         // TODO handle AKG message

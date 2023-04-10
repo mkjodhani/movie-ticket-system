@@ -3,11 +3,13 @@ package com.frontend.query;
 import com.frontend.Frontend;
 import com.frontend.registry.CentralRepository;
 import com.helper.Config;
-import com.helper.Message;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.HashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,7 +21,7 @@ import java.util.regex.Pattern;
 public class FrontEndQuery implements Runnable {
     private String query;
     int totalReplica;
-    private static final Pattern replicaResponse = Pattern.compile("^(\\d+),((\\w+):::([\\w\\W]+))$");
+    private static final Pattern replicaResponse = Pattern.compile("^(\\d+),((\\w+)::([\\w\\W]+))$");
     private String queryResponse;
     public FrontEndQuery(String query) throws SocketException {
         CentralRepository centralRepository = CentralRepository.getCentralRepository();
@@ -34,53 +36,53 @@ public class FrontEndQuery implements Runnable {
                     Inet4Address.getLocalHost(), Config.sequencerPort);
             Frontend.frontEndSocket.send(datagramPacket);
             queryResponse = getResponse();
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private String getResponse() throws IOException {
+    private String getResponse() throws IOException, InterruptedException {
         String[] responses = new String[CentralRepository.getCentralRepository().getTotalReplica()];
         HashMap<String, Integer> answerCount = new HashMap<>();
+        Thread[] threads = new Thread[ responses.length];
 //        HashMap<String, > answerCount = new HashMap<>();
-        int max = 0;
-        String maxRepeatedRes = "";
-        System.out.println("-----RES FROM DIFF REPLICA---------");
+        final int[] max = {0};
+        final String[] maxRepeatedRes = {""};
         for (int i = 0; i < responses.length; i++) {
-            byte[] array = new byte[1024];
-            DatagramPacket datagramPacket = new DatagramPacket(array, array.length);
-            try {
-                Frontend.frontEndSocket.receive(datagramPacket);
-                String res = new String(datagramPacket.getData(), 0, datagramPacket.getLength());
-                System.out.println(res);
-                answerCount.put(getRawDataFromResponse(res), answerCount.getOrDefault(getRawDataFromResponse(res), 0) + 1);
-                if (max <= answerCount.getOrDefault(getRawDataFromResponse(res),0)) {
-                    // COMPARE TO max and update the value
-                    max = answerCount.get(getRawDataFromResponse(res));
-                    // ASSIGN the value if necessary maxRepeatedRes
-                    maxRepeatedRes = getRawDataFromResponse(res);
-                } else {
-                    break;
-                }
-            }
-            catch (SocketTimeoutException e){
-                System.out.println("Skipped due to timeout!!");
-            }
-        }
-        System.out.println("--------------");
-        return maxRepeatedRes;
-    }
+            threads[i] = new Thread(() ->{
+                System.out.println("Thread Started");
+                byte[] array = new byte[1024];
+                DatagramPacket datagramPacket = new DatagramPacket(array, array.length);
+                try {
+                    Frontend.frontEndSocket.setSoTimeout(1000);
+                    Frontend.frontEndSocket.receive(datagramPacket);
+                    Frontend.frontEndSocket.setSoTimeout(0);
+                    String res = new String(datagramPacket.getData(), 0, datagramPacket.getLength());
+                    System.out.println("res:"+res);
+                    answerCount.put(getRawDataFromResponse(res), answerCount.getOrDefault(getRawDataFromResponse(res), 0) + 1);
+                    if (max[0] <= answerCount.getOrDefault(getRawDataFromResponse(res),0)) {
+                        // COMPARE TO max and update the value
+                        max[0] = answerCount.get(getRawDataFromResponse(res));
+                        // ASSIGN the value if necessary maxRepeatedRes
+                        maxRepeatedRes[0] = getRawDataFromResponse(res);
+                    }
+                    System.out.println("Thread finished");
 
-    private int getReplicaIdFromResponse(String response) {
-        try {
-            Matcher matcher = replicaResponse.matcher(response);
-            if (matcher.find()) {
-                return Integer.valueOf(matcher.group(1));
-            }
-        } catch (Exception e) {
-            return -1;
+                }
+                catch (SocketTimeoutException | SocketException e){
+                    System.out.println("Skipped due to timeout!!");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
-        return -1;
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+        for (int i = 0; i < responses.length; i++) {
+            executor.submit(threads[i]);
+        }
+        executor.shutdown();
+        executor.awaitTermination(1000, TimeUnit.SECONDS);
+        return maxRepeatedRes[0];
     }
 
     private String getRawDataFromResponse(String response) {

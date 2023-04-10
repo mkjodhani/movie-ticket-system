@@ -16,7 +16,8 @@ public class AdminImpl implements Admin {
     @Override
     public String addMovieSlots(String movieID, String movieName, int bookingCapacity) {
         try {
-            String command = Commands.getAddMovieSlotsQuery(movieID, movieName, bookingCapacity);
+            System.out.println("com.shared.Admin");
+            String command = Commands.getAddMovieSlotsQuery(movieID, movieName, bookingCapacity).toUpperCase();
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.run();
@@ -32,7 +33,7 @@ public class AdminImpl implements Admin {
     @Override
     public String removeMovieSlots(String movieID, String movieName) {
         try {
-            String command = Commands.getRemoveMovieSlotCommand(movieID, movieName);
+            String command = Commands.getRemoveMovieSlotCommand(movieID, movieName).toUpperCase();
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
@@ -47,7 +48,7 @@ public class AdminImpl implements Admin {
     @Override
     public String listMovieShowsAvailability(String movieName) {
         try {
-            String command = Commands.getListMovieShowsAvailabilityCommand(movieName);
+            String command = Commands.getListMovieShowsAvailabilityCommand(movieName).toUpperCase();
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();

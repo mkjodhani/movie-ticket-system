@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 public class Message {
     public static final String SUCCESS = "SUCCESS";
     public static final String ERROR = "ERROR";
-    private static final Pattern pattern = Pattern.compile("^(\\w+)(:::)(((\\w*)(\\W*))*)$");
+    private static final Pattern pattern = Pattern.compile("^(\\w+)(::)(((\\w*)(\\W*))*)$");
 
     public static Message getSuccessMessage(String message) {
         return new Message(message, SUCCESS);
@@ -27,7 +27,7 @@ public class Message {
     private String message;
 
     private Message(String message, String type) {
-        this.message = String.format("%s:::%s", type, message);
+        this.message = String.format("%s::%s", type, message);
     }
 
     public String getType() {

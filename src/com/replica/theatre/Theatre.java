@@ -18,13 +18,13 @@ import java.net.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Theatre implements Runnable {
+public class Theatre extends Thread {
     static public Logger LOGGER;
     private TheatreMetaData metaData;
     private DatagramSocket datagramSocket;
     private Admin admin;
     private Customer customer;
-
+    private Publisher publisher;
     public Theatre(int port, String location, String prefix){
         metaData = ReplicaManager.locationPorts.get(prefix);
         LOGGER = com.helper.Logger.getLogger(location, true);
@@ -33,7 +33,7 @@ public class Theatre implements Runnable {
     @Override
     public void run() {
         try {
-            Publisher publisher = new Publisher(metaData);
+            publisher = new Publisher(metaData);
             publisher.publish();
             datagramSocket = new DatagramSocket(metaData.getPort());
             setInitialState();
@@ -76,4 +76,10 @@ public class Theatre implements Runnable {
     public void setCustomer(Customer customer) {
         this.customer = customer;
     }
+
+    public void stopTheatre(){
+        publisher.stop();
+        datagramSocket.close();
+    }
+
 }

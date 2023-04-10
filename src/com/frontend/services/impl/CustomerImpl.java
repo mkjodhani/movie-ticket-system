@@ -16,14 +16,12 @@ public class CustomerImpl implements Customer {
     public String exchangeTickets(String customerID, String oldMovieName, String movieID, String newMovieID,
             String newMovieName, int numberOfTickets) {
         try {
-            System.out.println("exchangeTickets");
             String command = Commands.getExchangeTicketCommand(customerID, oldMovieName, movieID, newMovieID,
-                    newMovieName, numberOfTickets);
+                    newMovieName, numberOfTickets).toUpperCase();
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
             thread.join();
-            System.out.println("frontEndQuery.getQueryResponse()::"+frontEndQuery.getQueryResponse());
             return frontEndQuery.getQueryResponse();
         } catch (Exception e) {
             e.printStackTrace();
@@ -34,13 +32,11 @@ public class CustomerImpl implements Customer {
     @Override
     public String bookMovieTickets(String customerID, String movieID, String movieName, int numberOfTickets) {
         try {
-            System.out.println("bookMovieTickets");
-            String command = Commands.getAddMovieTicketsCommand(customerID, movieID, movieName, numberOfTickets);
+            String command = Commands.getAddMovieTicketsCommand(customerID, movieID, movieName, numberOfTickets).toUpperCase();
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
             thread.join();
-            System.out.println("frontEndQuery.getQueryResponse()::"+frontEndQuery.getQueryResponse());
             return frontEndQuery.getQueryResponse();
         } catch (Exception e) {
             e.printStackTrace();
@@ -51,13 +47,11 @@ public class CustomerImpl implements Customer {
     @Override
     public String getBookingSchedule(String customerID) {
         try {
-            System.out.println("getBookingSchedule");
-            String command = Commands.getBookingScheduleCommand(customerID);
+            String command = Commands.getBookingScheduleCommand(customerID).toUpperCase();
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
             thread.join();
-            System.out.println("frontEndQuery.getQueryResponse()::"+frontEndQuery.getQueryResponse());
             return frontEndQuery.getQueryResponse();
         } catch (Exception e) {
             e.printStackTrace();
@@ -68,13 +62,11 @@ public class CustomerImpl implements Customer {
     @Override
     public String cancelMovieTickets(String customerID, String movieID, String movieName, int numberOfTickets) {
         try {
-            System.out.println("cancelMovieTickets");
-            String command = Commands.getListMovieShowsAvailabilityCommand(movieName);
+            String command = Commands.getCancelMovieTicketsCommand(customerID,movieID,movieName,numberOfTickets).toUpperCase();
             FrontEndQuery frontEndQuery = new FrontEndQuery(command);
             Thread thread = new Thread(frontEndQuery);
             thread.start();
             thread.join();
-            System.out.println("frontEndQuery.getQueryResponse()::"+frontEndQuery.getQueryResponse());
             return frontEndQuery.getQueryResponse();
         } catch (Exception e) {
             e.printStackTrace();

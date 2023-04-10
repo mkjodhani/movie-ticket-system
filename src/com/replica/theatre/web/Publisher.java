@@ -14,7 +14,7 @@ import javax.xml.ws.Endpoint;
  */
 public class Publisher {
     private TheatreMetaData metaData;
-
+    private Endpoint customerEndpoint, adminEndpoint;
     public Publisher(TheatreMetaData metaData) {
         this.metaData = metaData;
     }
@@ -26,7 +26,11 @@ public class Publisher {
         metaData.setAdmin(admin);
         metaData.setCustomer(customer);
         metaData.setEndpoint(localhost);
-        Endpoint.publish(localhost + "/admin", admin);
-        Endpoint.publish(localhost + "/customer", customer);
+        adminEndpoint = Endpoint.publish(localhost + "/admin", admin);
+        customerEndpoint = Endpoint.publish(localhost + "/customer", customer);
+    }
+    public void stop(){
+        customerEndpoint.stop();
+        adminEndpoint.stop();
     }
 }

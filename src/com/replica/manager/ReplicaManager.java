@@ -24,33 +24,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReplicaManager {
     private static DatagramSocket rmUDPSocket = null;
-    public static final HashMap<String, TheatreMetaData> locationPorts = new HashMap<>();
+    public static HashMap<String, TheatreMetaData> locationPorts = new HashMap<>();
+    public static Theatre atwThread,verThread,outThread;
     public static void main(String[] args) throws UnknownHostException, SocketException {
         // TODO Move this to Replica Manager for fault tolerance
 
-        locationPorts.put("atw",
-                new TheatreMetaData(InetAddress.getLocalHost().getHostAddress(), "Atwater", "atw", 5051));
-        locationPorts.put("ver",
-                new TheatreMetaData(InetAddress.getLocalHost().getHostAddress(), "Verdun", "ver", 5052));
-        locationPorts.put("out",
-                new TheatreMetaData(InetAddress.getLocalHost().getHostAddress(), "Outremont", "out", 5053));
-
-        TheatreMetaData atwaterInfo = locationPorts.get("atw");
-        Theatre atwaterTheatre = new Theatre(atwaterInfo.getPort(), atwaterInfo.getLocation(), atwaterInfo.getPrefix());
-        Thread atwThread = new Thread(atwaterTheatre);
-        atwThread.start();
-
-        TheatreMetaData verdunInfo = locationPorts.get("ver");
-        Theatre verdunTheatre = new Theatre(verdunInfo.getPort(), verdunInfo.getLocation(), verdunInfo.getPrefix());
-        Thread verThread = new Thread(verdunTheatre);
-        verThread.start();
-
-        TheatreMetaData outremontInfo = locationPorts.get("out");
-        Theatre outremontTheatre = new Theatre(outremontInfo.getPort(), outremontInfo.getLocation(),
-                outremontInfo.getPrefix());
-        Thread outThread = new Thread(outremontTheatre);
-        outThread.start();
-
+        initManager();
         TimerTask timerTask = new TimerTask() {
             @Override
             public void run() {
@@ -77,14 +56,18 @@ public class ReplicaManager {
         scheduledThreadPool.scheduleAtFixedRate(timerTask, 0, 5, TimeUnit.SECONDS);
         startUDPListener();
     }
-    private static String handleQuery(String query){
-        System.out.println(query);
-        String command = Commands.generateParamsFromCommand(query)[1];
+    private static String handleQuery(String commandQuery) throws UnknownHostException {
+        String query = commandQuery.toLowerCase();
+        System.out.println("handleQuery:"+query);
+        String command = Commands.generateParamsFromCommand(query)[1].toUpperCase();
         Admin admin;
         Customer customer;
-        String response = Commands.SEND_ERROR;
+        String response = "ASDFGHJKL";
         String movieID,movieName,bookingCapacity,customerID,numberOfTickets;
         switch (command){
+            case Commands.RESTART_SERVER_REPLICA:
+                response = Commands.READY_TO_EXECUTE;
+                break;
             case Commands.ADD_MOVIE_SLOT:
                 movieID = Commands.generateParamsFromCommand(query)[2];
                 movieName = Commands.generateParamsFromCommand(query)[3];
@@ -134,8 +117,34 @@ public class ReplicaManager {
                 customer = getCustomer(Role.getLocationPrefix(customerID));
                 response = customer.exchangeTickets(customerID,oldMovieName,movieID,newMovieID,newMovieName,Integer.valueOf(numberOfTickets));
                 break;
+            default:
+                System.out.println("command::--::command::"+command);
         }
+        System.out.println(response);
         return response;
+    }
+    public static void initManager() throws UnknownHostException {
+        locationPorts = new HashMap<>();
+        locationPorts.put("atw",
+                new TheatreMetaData(InetAddress.getLocalHost().getHostAddress(), "Atwater", "atw", 5051));
+        locationPorts.put("ver",
+                new TheatreMetaData(InetAddress.getLocalHost().getHostAddress(), "Verdun", "ver", 5052));
+        locationPorts.put("out",
+                new TheatreMetaData(InetAddress.getLocalHost().getHostAddress(), "Outremont", "out", 5053));
+
+        TheatreMetaData atwaterInfo = locationPorts.get("atw");
+        atwThread = new Theatre(atwaterInfo.getPort(), atwaterInfo.getLocation(), atwaterInfo.getPrefix());
+        atwThread.start();
+
+        TheatreMetaData verdunInfo = locationPorts.get("ver");
+        verThread = new Theatre(verdunInfo.getPort(), verdunInfo.getLocation(), verdunInfo.getPrefix());
+        verThread.start();
+
+        TheatreMetaData outremontInfo = locationPorts.get("out");
+        outThread = new Theatre(outremontInfo.getPort(), outremontInfo.getLocation(),
+                outremontInfo.getPrefix());
+        outThread.start();
+        System.out.println("Restarted");
     }
     public static void startUDPListener() {
         Thread thread = new Thread() {
@@ -150,12 +159,24 @@ public class ReplicaManager {
                             DatagramPacket requestPacket = new DatagramPacket(requestBytes, requestBytes.length);
                             rmUDPSocket.receive(requestPacket);
                             String request = new String(requestPacket.getData(), 0, requestPacket.getLength());
-                            System.out.println(request);
+                            System.out.println("request:"+request);
                             String id = Commands.generateParamsFromCommand(request)[0];
                             String response = Commands.generateCommandFromParams(new String[]{id,handleQuery(request)});
+                            System.out.println("sending back response:"+response);
                             DatagramPacket sendPacket = new DatagramPacket(response.getBytes(), response.length(),
                                     requestPacket.getAddress(), Config.frontendUDPPort);
                             rmUDPSocket.send(sendPacket);
+                            if (response.contains(Commands.READY_TO_EXECUTE)){
+                                atwThread.stopTheatre();
+                                atwThread.interrupt();
+                                verThread.stopTheatre();
+                                verThread.interrupt();
+                                outThread.stopTheatre();
+                                outThread.interrupt();
+                                System.out.println("Stopped");
+                                initManager();
+                                break;
+                            }
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }

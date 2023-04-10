@@ -28,6 +28,7 @@ public class AdminService implements Admin {
 
     @Override
     public String addMovieSlots(String movieID, String movieName, int bookingCapacity) {
+        System.out.println("addMovieSlotsWEB12345");
         Message response;
         Actions actions = new Actions(metaData);
         try {
@@ -43,6 +44,7 @@ public class AdminService implements Admin {
         } catch (Exception e) {
             response = Message.getErrorMessage(e.getMessage());
         }
+        System.out.println("response.getMessage():"+response.getMessage());
         return response.getMessage();
     }
 

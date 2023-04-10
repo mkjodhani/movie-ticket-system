@@ -59,7 +59,7 @@ public class Commands {
     }
 
     public static final String getRestartReplicaCommand(String hostAddress, int port) {
-        String[] args = new String[] { AKG_INIT_SERVER, hostAddress, String.valueOf(port) };
+        String[] args = new String[] { RESTART_SERVER_REPLICA, hostAddress, String.valueOf(port) };
         return Commands.generateCommandFromParams(args);
     }
 

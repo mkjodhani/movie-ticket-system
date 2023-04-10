@@ -37,15 +37,12 @@ public class Sequencer implements Runnable{
                 Thread thread = new Thread(() ->{
                     String req = new String(request.getData(),0,request.getLength());
                     System.out.println(req+":Request");
-                    try {
-                        this.Connection(InetAddress.getLocalHost().getHostName(),Config.rm1Port, Commands.generateCommandFromParams(new String[]{String.valueOf(seqId) , req}));
-                        this.Connection("192.168.0.157",Config.rm1Port, Commands.generateCommandFromParams(new String[]{String.valueOf(seqId) , req}));
-                        AckCounter.put(seqId, 0);
-                        seqId++;
-                        wait=false;
-                    } catch (UnknownHostException e) {
-                        throw new RuntimeException(e);
+                    for (String replicaHostAddress: Config.replicas){
+                        this.Connection(replicaHostAddress,Config.rm1Port, Commands.generateCommandFromParams(new String[]{String.valueOf(seqId) , req}));
                     }
+                    AckCounter.put(seqId, 0);
+                    seqId++;
+                    wait=false;
                 });
                 thread.start();
             }

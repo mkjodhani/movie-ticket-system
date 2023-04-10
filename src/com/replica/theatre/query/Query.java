@@ -33,7 +33,7 @@ public class Query implements Runnable {
     private String executeCommand(String command) {
         Theatre.LOGGER.log(Level.INFO, String.format("Executing UDP command : %s", command));
         String[] args = command.split(Commands.DELIMITER);
-        String cmd = args[0];
+        String cmd = args[0].toUpperCase();
         String result = "";
         Actions actions = new Actions(metaData);
         switch (cmd) {
