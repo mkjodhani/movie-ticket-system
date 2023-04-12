@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
  * @since 28/03/23
  */
 public class ReplicaManager {
+    private static boolean enabledDelay = false;
     private static DatagramSocket rmUDPSocket = null;
     public static HashMap<String, TheatreMetaData> locationPorts = new HashMap<>();
     public static Theatre atwThread,verThread,outThread;
@@ -102,7 +103,7 @@ public class ReplicaManager {
     }
     private static String handleQuery(String commandQuery) throws UnknownHostException {
         String query = commandQuery.toLowerCase();
-        System.out.println("handleQuery:"+query);
+        System.out.println("handleQuery::1234:"+query);
         String command = Commands.generateParamsFromCommand(query)[1].toUpperCase();
         String id = Commands.generateParamsFromCommand(query)[0].toUpperCase();
         Admin admin;
@@ -244,7 +245,13 @@ public class ReplicaManager {
                                 System.out.println("sending back response:"+response);
                                 DatagramPacket sendPacket = new DatagramPacket(response.getBytes(), response.length(),
                                         requestPacket.getAddress(), Config.frontendUDPPort);
-                                rmUDPSocket.send(sendPacket);
+//                                if (enabledDelay){
+//                                    enabledDelay= !enabledDelay;
+//                                }
+//                                else {
+                                    rmUDPSocket.send(sendPacket);
+//                                    enabledDelay= !enabledDelay;
+//                                }
                             }
                         } catch (IOException e) {
                             throw new RuntimeException(e);

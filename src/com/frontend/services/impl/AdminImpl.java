@@ -61,6 +61,7 @@ public class AdminImpl implements Admin {
             thread.start();
             thread.join();
             String response = frontEndQuery.getQueryResponse();
+            System.out.println("response:::::::listMovieShowsAvailability::"+frontEndQuery.queryResponse);
             String id = frontEndQuery.queryResponse.split(Commands.DELIMITER)[0];
             Frontend.addCommand(id+Commands.DELIMITER+command);
             return response;

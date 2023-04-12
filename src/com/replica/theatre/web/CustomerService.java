@@ -148,7 +148,7 @@ public class CustomerService implements Customer {
             e.printStackTrace();
             message = Message.getErrorMessage(e.getLocalizedMessage());
         }
-        return message.getMessage();
+        return message.getMessage().replace("SUCCESS::","");
     }
 
     @Override

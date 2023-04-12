@@ -46,10 +46,8 @@ public class FrontEndQuery implements Runnable {
     }
 
     private void sendRestartCommand(String hostAddress) {
-        System.out.println("sendRestartCommand");
         String restartCommand = Commands.getRestartReplicaCommand(hostAddress,Config.rm1Port);
-        String response = sendStringToReplicaManager(hostAddress,restartCommand);
-        System.out.println("sendRestartCommand:::11;;"+response);
+        sendStringToReplicaManager(hostAddress,restartCommand);
     }
     public static String sendStringToReplicaManager(String hostAddress,String string){
         try {
@@ -108,21 +106,24 @@ public class FrontEndQuery implements Runnable {
                 DatagramPacket datagramPacket = new DatagramPacket(array, array.length);
                 try {
                     long startTime = System.currentTimeMillis();
-                    System.out.println("Delay Time:"+delayTime);
-                    System.out.println("Frontend.getTotalCommands():"+Frontend.getTotalCommands());
-                    Frontend.frontEndSocket.setSoTimeout(delayTime*2);
+                    Frontend.frontEndSocket.setSoTimeout(delayTime * 100);
                     Frontend.frontEndSocket.receive(datagramPacket);
                     Frontend.frontEndSocket.setSoTimeout(0);
                     replicaList.remove(datagramPacket.getAddress().getHostAddress());
+
+
                     long endTime = System.currentTimeMillis();
                     long timeTaken = endTime - startTime;
-                    System.out.println("Frontend.timeTaken():"+timeTaken);
                     if (delayTime == 1000){
                         delayTime = (int)timeTaken;
                     }else {
                         delayTime = (int)(delayTime * Frontend.getTotalCommands() + timeTaken)/(Frontend.getTotalCommands() + 1);
                     }
-                    String res = new String(datagramPacket.getData(), 0, datagramPacket.getLength());
+                    String res = new String(datagramPacket.getData(), 0, datagramPacket.getLength()).toLowerCase();
+                    if (queryResponse == null){
+                        queryResponse = res;
+                    }
+                    System.out.println(datagramPacket.getAddress().getHostAddress()+":::"+res);
                     responseReplicaHash.put(datagramPacket.getAddress().getHostAddress(),res);
                     answerCount.put(res, 0);
                 }
@@ -133,44 +134,56 @@ public class FrontEndQuery implements Runnable {
                 }
 //            });
         }
+        System.out.println("----------------------");
+
+        for (String restartReplica:replicaList){
+            Thread thread = new Thread(() ->{
+                sendRestartCommand(restartReplica);
+            });
+            thread.start();
+        }
+        votes = compareAnswer(answerCount);
+        System.out.println("AFTER COMAPRASION::"+queryResponse);
         if (queryResponse == null){
             queryResponse = Commands.getErrorCommand("Something went wrong!");
         }
-        for (String restartReplica:replicaList){
-            sendRestartCommand(restartReplica);
-        }
-        System.out.println("-----------RESPONSE FROM REPLICA-----------");
-        votes = compareAnswer(answerCount);
-
     }
-    private Set<String> getSetOfItems(String itemString){
-        Set<String> set = new HashSet<>();
-        for (String item: itemString.split(Commands.DELIMITER)){
-            set.add(item);
+    private String[]  getSetOfItems(String string){
+        String itemString = string.toLowerCase();
+        ArrayList<String> arrayList = new ArrayList();
+        for (String item:itemString.split(Commands.DELIMITER)){
+            if (!item.equals("") && !item.equals("success::")){
+                arrayList.add(item);
+            }
         }
-        return set;
+        String[] arr = new String[arrayList.size()];
+        for (int i=0;i<arr.length;i++){
+            arr[i] = arrayList.get(i).trim();
+        }
+        Arrays.sort(arr);
+        return arr;
     }
     private HashMap<String,Integer> compareAnswer(HashMap<String,Integer> answers) {
         HashMap<String,Integer> votes = new HashMap<>();
         if (query.toLowerCase().contains(Commands.LIST_MOVIE_AVAILABILITY.toLowerCase()) || query.toLowerCase().contains(Commands.GET_CUSTOMER_SCHEDULE.toLowerCase()) ){
-            System.out.println("ew3r");
             // TODO do the iterative approach for these command
             for (String ans:answers.keySet()){
                 if (queryResponse == null){
                     queryResponse = ans;
                 }
-                System.out.println("set1");
-                Set<String> set1 = getSetOfItems(getRawDataFromResponse(ans));
+                String[]  set1 = getSetOfItems(getRawDataFromResponse(ans));
                 for (String ans_:answers.keySet()){
                     if (!ans_.equals(ans)){
-                        System.out.println("set2");
-                        Set<String> set2 = getSetOfItems(getRawDataFromResponse(ans_));
-                        if (set1.equals(set2)){
+                        String[] set2 = getSetOfItems(getRawDataFromResponse(ans_));
+                        if (Arrays.equals(set2, set1)){
                             votes.put(ans,votes.getOrDefault(ans,0)+1);
                             if (votes.getOrDefault(ans,0) > maxCommonCount){
                                 maxCommonCount = votes.getOrDefault(ans,0);
                                 queryResponse = ans;
                             }
+                        }
+                        else {
+                            votes.put(ans,votes.getOrDefault(ans,0)+1);
                         }
                     }
                 }
@@ -193,22 +206,40 @@ public class FrontEndQuery implements Runnable {
                 }
             }
         }
+        System.out.println("----------COMAPARING----------");
+        for (String key:votes.keySet()){
+            System.out.println(key+"::::===>>"+votes.get(key));
+        }
+        System.out.println("----------COMAPARING----------");
         return votes;
     }
     private String getRawDataFromResponse(String response) {
-        try {
-            System.out.println("getRawDataFromResponse::"+response);
-            Matcher matcher = replicaResponse.matcher(response);
-            if (matcher.find()) {
-                return matcher.group(2);
+        if (query.toLowerCase().contains(Commands.LIST_MOVIE_AVAILABILITY.toLowerCase()) || query.toLowerCase().contains(Commands.GET_CUSTOMER_SCHEDULE.toLowerCase()) ){
+            Pattern replicaResponse = Pattern.compile("^(\\d+),([\\w\\W]+)$");
+            try {
+                Matcher matcher = replicaResponse.matcher(response);
+                if (matcher.find()) {
+                    return matcher.group(2);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "";
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "";
+        }else {
+            try {
+                Matcher matcher = replicaResponse.matcher(response);
+                if (matcher.find()) {
+                    return matcher.group(2);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "";
+            }
         }
         return "";
     }
     public String getQueryResponse() {
+        System.out.println("getRawDataFromResponse(queryResponse)::"+getRawDataFromResponse(queryResponse));
         return getRawDataFromResponse(queryResponse);
     }
 }

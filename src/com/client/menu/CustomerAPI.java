@@ -90,7 +90,7 @@ public class CustomerAPI {
     public void getBookingSchedule() {
         LOGGER.log(Level.INFO, "Fetching booking schedule...");
         String response = customer.getBookingSchedule(this.customerId);
-        Message message = Message.generateMessageFromString(response);
+        Message message = Message.generateMessageFromString("SUCCESS::"+response);
         LOGGER.log(Level.INFO, message.getMessage());
         if (message.extractMessage().equals("")) {
             System.out.println(String.format("No schedule available for customer %s.", this.customerId));

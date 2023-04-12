@@ -112,6 +112,6 @@ public class AdminService implements Admin {
         } catch (Exception e) {
             response = Message.getErrorMessage(e.getLocalizedMessage());
         }
-        return response.getMessage();
+        return response.getMessage().replace("SUCCESS::,","");
     }
 }

@@ -262,7 +262,12 @@ public class Actions {
                 response = Message.getErrorMessage("No slot found by ID of " + movieID);
             } else {
                 String nextSlotID = Input.getNextAvailableSlotID(movie.getSlots().keySet(), movieID);
-                if (nextSlotID == null) {
+                if (deletedSlot.getBookedTickets() == 0){
+                    response = Message.getSuccessMessage(String.format(
+                            "Movie slot for %s for %s is successfully deleted.Also the next slot(%s) is extended to %d tickets.",
+                            movieName, movieID, nextSlotID, deletedSlot.getBookedTickets()));
+                }
+                else if (nextSlotID == null ) {
                     movie.getSlots().put(deletedSlot.getSlotId(), deletedSlot);
                     response = Message.getErrorMessage("No slots available to transfer the booked seats of " + movieID
                             + " for " + movieName + ".");

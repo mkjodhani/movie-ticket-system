@@ -99,22 +99,20 @@ public class AdminAPI {
     public void listMovieShowsAvailability() {
         try {
             String movieName = Input.getString("Enter movie name :").toLowerCase();
-            String response = admin.listMovieShowsAvailability(movieName);
-            System.out.println(response);
-            String slots = Message.generateMessageFromString(admin.listMovieShowsAvailability(movieName))
-                    .extractMessage();
+            String slots = admin.listMovieShowsAvailability(movieName);
             if (slots.equals("")) {
                 System.out.println("No slots found for " + movieName + ".");
             } else {
                 for (String slot : slots.split(Commands.DELIMITER)) {
                     if (!slot.equals("")){
-                        printMovieAvailability(slot);
+                        printMovieAvailability(slot.trim());
                     }
                 }
             }
             LOGGER.info(
                     Logger.getFullMessage(String.format("listMovieShowsAvailability movieName:%s", movieName), slots));
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("Something went wrong form our side, please try again later.");
         }
     }

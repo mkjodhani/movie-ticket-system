@@ -69,7 +69,7 @@ public class Slot {
                     totalNumberOfSeats, this.slotId));
             return false;
         }
-        this.bookedSeats.put(customerId, totalNumberOfSeats);
+        this.bookedSeats.put(customerId, this.bookedSeats.getOrDefault(customerId,0) + totalNumberOfSeats);
         this.bookedTickets += totalNumberOfSeats;
         Theatre.LOGGER.log(Level.INFO,
                 String.format("Booked %d tickets for %s by %s.", totalNumberOfSeats, this.slotId, customerId));

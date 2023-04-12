@@ -26,7 +26,7 @@ import java.util.ArrayList;
 public class Frontend {
     private static FileWriter writer;
     private static ArrayList<String> listOfCommand;
-    private static String fileName = "file.txt";
+    private static String fileName = "commands.txt";
     public static DatagramSocket frontEndSocket;
     public static DatagramSocket heartBeatSocket;
     public static void main(String[] args) throws IOException {
@@ -54,7 +54,7 @@ public class Frontend {
                         DatagramPacket requestPacket = new DatagramPacket(replyBytes, replyBytes.length);
                         heartBeatSocket.receive(requestPacket);
                         String request = new String(requestPacket.getData(), 0, requestPacket.getLength());
-//                        System.out.println(request);
+                        System.out.println(request);
                         String[] requestParams = Commands.generateParamsFromCommand(request);
                         String response = "";
                         String replicaID = "";

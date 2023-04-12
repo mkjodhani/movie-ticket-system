@@ -46,7 +46,7 @@ public class Movie {
         } else {
             Theatre.LOGGER.log(Level.INFO, String.format("Total number of seats updated from %d to %d for %s.",
                     slot.getTotalSeats(), numberOfSeats, slotId));
-            slot.setTotalSeats(numberOfSeats);
+            slot.setTotalSeats(slot.getTotalSeats() + numberOfSeats);
         }
         return slot;
     }
