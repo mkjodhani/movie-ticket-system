@@ -10,10 +10,10 @@ public class Config {
     public static int frontendHeartBeatSocket = 9999; // UDP SERVER
     public static int frontendWebPort = 3000; // WEB SERVICE
     public static String[] replicas = new String[]{
-//            "192.168.241.160",
+            "192.168.241.160",
             "192.168.241.19",
             "192.168.241.142",
-//            "192.168.241.225",
+            "192.168.241.225",
     };
     public static String localAddress;
     public static String frontEndAddress;

@@ -96,6 +96,7 @@ public class FrontEndQuery implements Runnable {
         responseReplicaHash = new HashMap<>();
         ArrayList<String> replicaList = new ArrayList<>(Arrays.asList(Config.replicas));
         HashMap<String, Integer> answerCount = new HashMap<>();
+        ArrayList<String> arrayList = new ArrayList<>();
 //        Thread[] threads = new Thread[ responses.length];
 //        final int[] max = {0};
 //        final String[] maxRepeatedRes = {""};
@@ -124,8 +125,9 @@ public class FrontEndQuery implements Runnable {
                         queryResponse = res;
                     }
                     System.out.println(datagramPacket.getAddress().getHostAddress()+":::"+res);
-                    responseReplicaHash.put(datagramPacket.getAddress().getHostAddress(),res);
-                    answerCount.put(res, 0);
+//                    responseReplicaHash.put(datagramPacket.getAddress().getHostAddress(),res);
+                    arrayList.add(res);
+                    answerCount.put(res,answerCount.getOrDefault(res,0)+1);
                 }
                 catch (SocketTimeoutException | SocketException e){
                     System.out.println("Skipped due to timeout!!");
@@ -142,7 +144,7 @@ public class FrontEndQuery implements Runnable {
             });
             thread.start();
         }
-        votes = compareAnswer(answerCount);
+        votes = compareAnswer(arrayList);
         System.out.println("AFTER COMAPRASION::"+queryResponse);
         if (queryResponse == null){
             queryResponse = Commands.getErrorCommand("Something went wrong!");
@@ -152,8 +154,8 @@ public class FrontEndQuery implements Runnable {
         String itemString = string.toLowerCase();
         ArrayList<String> arrayList = new ArrayList();
         for (String item:itemString.split(Commands.DELIMITER)){
-            if (!item.equals("") && !item.equals("success::")){
-                arrayList.add(item);
+            if (!item.equals("") && !item.equals("success::") && !item.equals("error::")){
+                arrayList.add(item.trim());
             }
         }
         String[] arr = new String[arrayList.size()];
@@ -163,36 +165,52 @@ public class FrontEndQuery implements Runnable {
         Arrays.sort(arr);
         return arr;
     }
-    private HashMap<String,Integer> compareAnswer(HashMap<String,Integer> answers) {
-        HashMap<String,Integer> votes = new HashMap<>();
-        if (query.toLowerCase().contains(Commands.LIST_MOVIE_AVAILABILITY.toLowerCase()) || query.toLowerCase().contains(Commands.GET_CUSTOMER_SCHEDULE.toLowerCase()) ){
+    public static boolean compareArrays(String[] arr1, String[] arr2) {
+        // Sort both arrays
+        Arrays.sort(arr1);
+        Arrays.sort(arr2);
+
+        // Compare the sorted arrays element by element
+        for (int i = 0; i < arr1.length; i++) {
+            if (!arr1[i].equals(arr2[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+    private HashMap<String,Integer> compareAnswer(ArrayList<String> answers) {
+        HashMap<String, Integer> votes = new HashMap<>();
+        if (query.toLowerCase().contains(Commands.LIST_MOVIE_AVAILABILITY.toLowerCase()) || query.toLowerCase().contains(Commands.GET_CUSTOMER_SCHEDULE.toLowerCase())) {
             // TODO do the iterative approach for these command
-            for (String ans:answers.keySet()){
-                if (queryResponse == null){
-                    queryResponse = ans;
+            for (int i = 0; i < answers.size(); i++) {
+                if (queryResponse == null) {
+                    queryResponse = answers.get(i);
                 }
-                String[]  set1 = getSetOfItems(getRawDataFromResponse(ans));
-                for (String ans_:answers.keySet()){
-                    if (!ans_.equals(ans)){
-                        String[] set2 = getSetOfItems(getRawDataFromResponse(ans_));
-                        if (Arrays.equals(set2, set1)){
-                            votes.put(ans,votes.getOrDefault(ans,0)+1);
-                            if (votes.getOrDefault(ans,0) > maxCommonCount){
-                                maxCommonCount = votes.getOrDefault(ans,0);
-                                queryResponse = ans;
-                            }
-                        }
-                        else {
-                            votes.put(ans,votes.getOrDefault(ans,0)+1);
+                votes.put(answers.get(i), 0);
+                String[] set1 = getSetOfItems(getRawDataFromResponse(answers.get(i)));
+                for (int j = 0; j < answers.size(); j++) {
+                    if (i != j) {
+                        String[] set2 = getSetOfItems(getRawDataFromResponse(answers.get(j)));
+                        if (compareArrays(set2, set1)) {
+                            System.out.println(answers.get(i));
+                            System.out.println("AND");
+                            System.out.println(answers.get(j));
+                            votes.put(answers.get(i), votes.get(answers.get(i)) + 1);
                         }
                     }
+                }
+                if (votes.get(answers.get(i)) >= maxCommonCount) {
+                    maxCommonCount = votes.getOrDefault(answers.get(i), 0);
+                    queryResponse = answers.get(i);
+                    System.out.println("UPDATE FINAL ANSWER:"+queryResponse);
                 }
             }
         }
         else {
-            for (String ans:answers.keySet()){
+            for (String ans:answers){
                 Matcher matcher1 = replicaResponse.matcher(ans);
-                for (String ans_:answers.keySet()) {
+                for (String ans_:answers) {
                     Matcher matcher2 = replicaResponse.matcher(ans_);
                     if (matcher2.find() && matcher1.find()){
                         if ( matcher1.group(3).equals(matcher2.group(3))){
