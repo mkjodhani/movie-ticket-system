@@ -276,6 +276,9 @@ public class Input {
         }
         if (currentList.isEmpty()) {
             String nextSlotDate = getNextDateFromID(currentSlot);
+            if (nextList.isEmpty()){
+                return null;
+            }
             return getNextSlot(nextList, location + "-" + nextSlotDate);
         } else {
             return currentList.get(0);

@@ -14,6 +14,7 @@ public class Commands {
     public static final String INT_SERVER = "INT_SERVER";
     public static final String AKG_INIT_SERVER = "AKG_INIT_SERVER";
     public static final String READY_TO_EXECUTE = "READY_TO_EXECUTE";
+    public static final String GET_LIST_OF_REQUESTS = "GET_LIST_OF_REQUESTS";
     public static final String HEART_BEAT = "HEART_BEAT";
     public static final String AKG_HEART_BEAT = "AKG_HEART_BEAT";
     public static final String RESTART_SERVER_REPLICA = "RESTART_SERVER_REPLICA";
@@ -43,6 +44,15 @@ public class Commands {
         String[] args = new String[] { INT_SERVER, hostAddress, String.valueOf(port) };
         return Commands.generateCommandFromParams(args);
     }
+    public static final String getGetListOfRequestsCommand(){
+        String[] args = new String[] { GET_LIST_OF_REQUESTS };
+        return Commands.generateCommandFromParams(args);
+    }
+    public static final String getReadyToExecuteCommand(int port) throws UnknownHostException {
+        String hostAddress = Inet4Address.getLocalHost().getHostAddress();
+        String[] args = new String[] { READY_TO_EXECUTE, hostAddress, String.valueOf(port) };
+        return Commands.generateCommandFromParams(args);
+    }
     public static final String getHeartBeatCommand(int port) throws UnknownHostException {
         String hostAddress = Inet4Address.getLocalHost().getHostAddress();
         String[] args = new String[] { HEART_BEAT, hostAddress, String.valueOf(port) };
@@ -59,7 +69,7 @@ public class Commands {
     }
 
     public static final String getRestartReplicaCommand(String hostAddress, int port) {
-        String[] args = new String[] { RESTART_SERVER_REPLICA, hostAddress, String.valueOf(port) };
+        String[] args = new String[] { "-1",RESTART_SERVER_REPLICA, hostAddress, String.valueOf(port) };
         return Commands.generateCommandFromParams(args);
     }
 

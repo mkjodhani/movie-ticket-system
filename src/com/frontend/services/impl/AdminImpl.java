@@ -1,10 +1,12 @@
 package com.frontend.services.impl;
 
+import com.frontend.Frontend;
 import com.frontend.query.FrontEndQuery;
 import com.helper.Commands;
 import com.shared.Admin;
 
 import javax.jws.WebService;
+import java.awt.*;
 
 /**
  * @author mkjodhani
@@ -23,6 +25,8 @@ public class AdminImpl implements Admin {
             thread.run();
             thread.join();
             String response = frontEndQuery.getQueryResponse();
+            String id = frontEndQuery.queryResponse.split(Commands.DELIMITER)[0];
+            Frontend.addCommand(id+Commands.DELIMITER+command);
             return response;
         } catch (Exception e) {
             e.printStackTrace();
@@ -38,7 +42,10 @@ public class AdminImpl implements Admin {
             Thread thread = new Thread(frontEndQuery);
             thread.start();
             thread.join();
-            return frontEndQuery.getQueryResponse();
+            String response = frontEndQuery.getQueryResponse();
+            String id = frontEndQuery.queryResponse.split(Commands.DELIMITER)[0];
+            Frontend.addCommand(id+Commands.DELIMITER+command);
+            return response;
         } catch (Exception e) {
             e.printStackTrace();
             return Commands.getErrorCommand(e.getMessage());
@@ -53,7 +60,10 @@ public class AdminImpl implements Admin {
             Thread thread = new Thread(frontEndQuery);
             thread.start();
             thread.join();
-            return frontEndQuery.getQueryResponse();
+            String response = frontEndQuery.getQueryResponse();
+            String id = frontEndQuery.queryResponse.split(Commands.DELIMITER)[0];
+            Frontend.addCommand(id+Commands.DELIMITER+command);
+            return response;
         } catch (Exception e) {
             e.printStackTrace();
             return Commands.getErrorCommand(e.getMessage());

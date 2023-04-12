@@ -46,6 +46,15 @@ public class CentralRepository {
         }
         return replicaServers.values().size();
     }
+    public int getTotalActiveReplica() {
+        int total = 0;
+        for (ReplicaMetadata replicaMetadata: replicaServers.values()){
+            if (replicaMetadata.isActive()){
+                total++;
+            }
+        }
+        return total;
+    }
 
     public void validateReplica() {
         if (replicaServers == null) {

@@ -84,4 +84,7 @@ public class ReplicaMetadata {
         };
         thread.start();
     }
+    public void reduceLifeLine(){
+        this.lifeline = this.lifeline - 1;
+    }
 }

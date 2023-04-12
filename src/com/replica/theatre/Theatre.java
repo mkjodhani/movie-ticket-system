@@ -19,6 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Theatre extends Thread {
+    private boolean isActive = true;
     static public Logger LOGGER;
     private TheatreMetaData metaData;
     private DatagramSocket datagramSocket;
@@ -42,16 +43,17 @@ public class Theatre extends Thread {
             System.out.println(metaData.getLocation() + " server is started at " + metaData.getPort() + "(UDP) and "
                     + metaData.getEndpoint() + ".");
             // start UDP listener
-            while (true) {
+            while (isActive) {
                 try {
                     byte[] bytes = new byte[1024];
                     DatagramPacket receivedPacket = new DatagramPacket(bytes, bytes.length);
+                    System.out.println(this.metaData.getLocation()+"::receive");
                     this.datagramSocket.receive(receivedPacket);
                     Query query = new Query(receivedPacket, metaData);
                     Thread thread = new Thread(query);
                     thread.start();
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    e.printStackTrace();
                 }
             }
         } catch (Exception e) {
@@ -79,7 +81,8 @@ public class Theatre extends Thread {
 
     public void stopTheatre(){
         publisher.stop();
-        datagramSocket.close();
+        isActive = false;
+        this.datagramSocket.close();
     }
 
 }

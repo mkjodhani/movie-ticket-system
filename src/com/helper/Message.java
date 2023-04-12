@@ -15,21 +15,16 @@ public class Message {
     public static final String SUCCESS = "SUCCESS";
     public static final String ERROR = "ERROR";
     private static final Pattern pattern = Pattern.compile("^(\\w+)(::)(((\\w*)(\\W*))*)$");
-
     public static Message getSuccessMessage(String message) {
         return new Message(message, SUCCESS);
     }
-
     public static Message getErrorMessage(String message) {
         return new Message(message, ERROR);
     }
-
     private String message;
-
     private Message(String message, String type) {
         this.message = String.format("%s::%s", type, message);
     }
-
     public String getType() {
         Matcher matcher = pattern.matcher(message);
         if (matcher.find()) {
@@ -38,7 +33,6 @@ public class Message {
             return ERROR;
         }
     };
-
     public String extractMessage() {
         Matcher matcher = pattern.matcher(message);
         if (message == null) {
@@ -50,11 +44,9 @@ public class Message {
             return message;
         }
     };
-
     public String getMessage() {
         return message;
     }
-
     public void show() {
         if (getType().equals(SUCCESS)) {
             System.out.println(extractMessage());
@@ -62,7 +54,6 @@ public class Message {
             System.out.println(extractMessage());
         }
     }
-
     public static Message generateMessageFromString(String str) {
         Matcher matcher = pattern.matcher(str);
         if (matcher.find()) {

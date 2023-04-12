@@ -26,13 +26,17 @@ public class ReplicaManager {
     private static DatagramSocket rmUDPSocket = null;
     public static HashMap<String, TheatreMetaData> locationPorts = new HashMap<>();
     public static Theatre atwThread,verThread,outThread;
-    public static void main(String[] args) throws UnknownHostException, SocketException {
+    public static void main(String[] args) throws UnknownHostException {
         // TODO Move this to Replica Manager for fault tolerance
-
         initManager();
         TimerTask timerTask = new TimerTask() {
             @Override
             public void run() {
+                // if the replica is not running
+                if (!(atwThread.isAlive() && verThread.isAlive() && outThread.isAlive())){
+                    return;
+                }
+//                else send the heart beat
                 try {
                     String request  = Commands.getHeartBeatCommand(Config.rm1Port);
                     DatagramSocket socket = new DatagramSocket();
@@ -42,7 +46,6 @@ public class ReplicaManager {
                     DatagramPacket receivedPacket = new DatagramPacket(receivedBytes,receivedBytes.length);
                     socket.receive(receivedPacket);
                     String response = new String(receivedBytes,0,receivedPacket.getLength());
-                    System.out.println(response);
                 } catch (UnknownHostException e) {
                     throw new RuntimeException(e);
                 } catch (SocketException e) {
@@ -53,19 +56,70 @@ public class ReplicaManager {
             }
         };
         ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(1);
-        scheduledThreadPool.scheduleAtFixedRate(timerTask, 0, 5, TimeUnit.SECONDS);
+        scheduledThreadPool.scheduleAtFixedRate(timerTask, 1, 5, TimeUnit.SECONDS);
         startUDPListener();
+//        sendReadyToExecute();
+    }
+    private static void sendReadyToExecute() {
+        try {
+            String request = Commands.getReadyToExecuteCommand(Config.rm1Port);
+            System.out.println("sendReadyToExecute::"+request);
+            DatagramSocket socket = new DatagramSocket();
+            DatagramPacket packet = new DatagramPacket(request.getBytes(),request.length(),Inet4Address.getByName(Config.frontEndAddress),Config.frontendHeartBeatSocket);
+            socket.send(packet);
+            byte[] receivedBytes = new byte[1024];
+            DatagramPacket receivedPacket = new DatagramPacket(receivedBytes,receivedBytes.length);
+            socket.receive(receivedPacket);
+            String response = new String(receivedBytes,0,receivedPacket.getLength());
+            System.out.println("sendReadyToExecute::RES::"+response);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    private static void sendGetListOfRequest() {
+        try {
+            String request = Commands.getGetListOfRequestsCommand();
+            System.out.println("sendGetListOfRequest::"+request);
+            DatagramSocket socket = new DatagramSocket();
+            DatagramPacket packet = new DatagramPacket(request.getBytes(),request.length(),Inet4Address.getByName(Config.frontEndAddress),Config.frontendHeartBeatSocket);
+            socket.send(packet);
+            byte[] receivedBytes = new byte[1024];
+            DatagramPacket receivedPacket = new DatagramPacket(receivedBytes,receivedBytes.length);
+            System.out.println("receive:1");
+            socket.receive(receivedPacket);
+            System.out.println("receive:2");
+            String response = new String(receivedBytes,0,receivedPacket.getLength());
+            for (String command:response.split(System.lineSeparator())){
+                String result = handleQuery(command);
+                System.out.println("handleQuery(command):::"+result);
+            }
+            System.out.println("sendGetListOfRequest::RES::"+response);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
     private static String handleQuery(String commandQuery) throws UnknownHostException {
         String query = commandQuery.toLowerCase();
         System.out.println("handleQuery:"+query);
         String command = Commands.generateParamsFromCommand(query)[1].toUpperCase();
+        String id = Commands.generateParamsFromCommand(query)[0].toUpperCase();
         Admin admin;
         Customer customer;
-        String response = "ASDFGHJKL";
+        String response = "TEMP";
         String movieID,movieName,bookingCapacity,customerID,numberOfTickets;
+        System.out.println("command::"+command);
         switch (command){
             case Commands.RESTART_SERVER_REPLICA:
+                System.out.println("RESTART_SERVER_REPLICA");
+                response = Commands.GET_LIST_OF_REQUESTS;
+                break;
+            case Commands.GET_LIST_OF_REQUESTS:
+                String commands = query.replace(id+Commands.DELIMITER,"").replace(Commands.GET_LIST_OF_REQUESTS+Commands.DELIMITER,"");
+                System.out.println("----------------");
+                System.out.println(commands);
+                System.out.println("----------------");
                 response = Commands.READY_TO_EXECUTE;
                 break;
             case Commands.ADD_MOVIE_SLOT:
@@ -144,7 +198,7 @@ public class ReplicaManager {
         outThread = new Theatre(outremontInfo.getPort(), outremontInfo.getLocation(),
                 outremontInfo.getPrefix());
         outThread.start();
-        System.out.println("Restarted");
+        System.out.println("STARTED");
     }
     public static void startUDPListener() {
         Thread thread = new Thread() {
@@ -155,27 +209,42 @@ public class ReplicaManager {
                     rmUDPSocket = new DatagramSocket(Config.rm1Port);
                     while (true) {
                         try {
+                            System.out.println("UDP IS WAITING AT RM");
                             byte[] requestBytes = new byte[1024];
                             DatagramPacket requestPacket = new DatagramPacket(requestBytes, requestBytes.length);
                             rmUDPSocket.receive(requestPacket);
                             String request = new String(requestPacket.getData(), 0, requestPacket.getLength());
                             System.out.println("request:"+request);
-                            String id = Commands.generateParamsFromCommand(request)[0];
-                            String response = Commands.generateCommandFromParams(new String[]{id,handleQuery(request)});
-                            System.out.println("sending back response:"+response);
-                            DatagramPacket sendPacket = new DatagramPacket(response.getBytes(), response.length(),
-                                    requestPacket.getAddress(), Config.frontendUDPPort);
-                            rmUDPSocket.send(sendPacket);
-                            if (response.contains(Commands.READY_TO_EXECUTE)){
-                                atwThread.stopTheatre();
+                            if (request.contains(Commands.RESTART_SERVER_REPLICA)){
+                                System.out.println("RESTART_SERVER_REPLICA::captured");
                                 atwThread.interrupt();
-                                verThread.stopTheatre();
+                                atwThread.stopTheatre();
                                 verThread.interrupt();
-                                outThread.stopTheatre();
+                                verThread.stopTheatre();
                                 outThread.interrupt();
-                                System.out.println("Stopped");
+                                outThread.stopTheatre();
+                                rmUDPSocket.close();
                                 initManager();
-                                break;
+                                startUDPListener();
+                                Timer timer = new Timer();
+                                int delay = 1000; // Delay in milliseconds (5 seconds)
+                                TimerTask task = new TimerTask() {
+                                    public void run() {
+                                        System.out.println("SERc------------------------------------");
+                                        sendGetListOfRequest();
+                                    }
+                                };
+
+                                timer.schedule(task, delay);
+//                                sendReadyToExecute();
+                            }
+                            else {
+                                String id = Commands.generateParamsFromCommand(request)[0];
+                                String response = Commands.generateCommandFromParams(new String[]{id,handleQuery(request)});
+                                System.out.println("sending back response:"+response);
+                                DatagramPacket sendPacket = new DatagramPacket(response.getBytes(), response.length(),
+                                        requestPacket.getAddress(), Config.frontendUDPPort);
+                                rmUDPSocket.send(sendPacket);
                             }
                         } catch (IOException e) {
                             throw new RuntimeException(e);
@@ -186,6 +255,7 @@ public class ReplicaManager {
                 }
             }
         };
+        thread.setPriority(Thread.MAX_PRIORITY);
         thread.start();
     }
     public static Customer getCustomer(String locationPrefix) {
