@@ -9,6 +9,7 @@ import com.helper.Config;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.util.jar.Attributes;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,7 +59,9 @@ public class FrontEndQuery implements Runnable {
             System.out.println("sendStringToReplicaManager::"+"sent");
             byte[] array = new byte[1024];
             DatagramPacket recievedPacket = new DatagramPacket(array, array.length);
+            socket.setSoTimeout(1000);
             socket.receive(recievedPacket);
+            socket.setSoTimeout(0);
             String res = new String(recievedPacket.getData(), 0, recievedPacket.getLength());
             System.out.println("sendStringToReplicaManager::res:"+res);
             if (res.equals(Commands.READY_TO_EXECUTE)){
@@ -75,19 +78,41 @@ public class FrontEndQuery implements Runnable {
     }
 
     private void updateLifelines() throws SocketException, InterruptedException {
-        for (String answer: votes.keySet()){
-            if (votes.get(answer) < maxCommonCount){
-                for (String hostAddress: responseReplicaHash.keySet()){
-                    if (responseReplicaHash.get(hostAddress).equals(answer)){
-                        if (CentralRepository.getCentralRepository().getReplicaServer(hostAddress).getLifeline() == 0){
-                            CentralRepository.getCentralRepository().getReplicaServer(hostAddress).setActive(false);
-                            sendRestartCommand(hostAddress);
-                        }
-                        else {
-                            CentralRepository.getCentralRepository().getReplicaServer(hostAddress).reduceLifeLine();
-                        }
+        if (query.toLowerCase().contains(Commands.LIST_MOVIE_AVAILABILITY.toLowerCase()) || query.toLowerCase().contains(Commands.GET_CUSTOMER_SCHEDULE.toLowerCase())) {
+            String[] set1 = getSetOfItems(getRawDataFromResponse(this.queryResponse));
+            Arrays.sort(set1);
+            String finalResponse = String.join(Commands.DELIMITER, set1);
+            System.out.println("finalResponse::"+finalResponse);
+            for (String replicaAddress:responseReplicaHash.keySet()){
+                String[] set2 = getSetOfItems(getRawDataFromResponse(responseReplicaHash.get(replicaAddress)));
+                Arrays.sort(set2);
+                String replicaResponse = String.join(Commands.DELIMITER, set2);
+                if (!finalResponse.equals(replicaResponse)){
+                    System.out.println("responseReplicaHash.get(replicaAddress)::"+replicaResponse);
+                    System.out.println("replicaAddress CTYGVGYFFTCFGGFYCFH HGY GU"+replicaAddress);
+                    if (CentralRepository.getCentralRepository().getReplicaServer(replicaAddress+":"+Config.rm1Port).getLifeline() == 0){
+                        sendRestartCommand(replicaAddress);
                     }
-                }
+                    else {
+                        CentralRepository.getCentralRepository().getReplicaServer(replicaAddress+":"+Config.rm1Port).reduceLifeLine();
+                    }
+                };
+            }
+        }
+        else{
+            Matcher matcher1 = replicaResponse.matcher(this.queryResponse);
+            matcher1.find();
+            String flag = matcher1.group(3);
+            for (String replicaAddress:responseReplicaHash.keySet()){
+                if (!responseReplicaHash.get(replicaAddress).contains(flag)){
+                    System.out.println("replicaAddress CTYGVGYFFTCFGGFYCFH HGY GU"+replicaAddress);
+                    if (CentralRepository.getCentralRepository().getReplicaServer(replicaAddress+":"+Config.rm1Port).getLifeline() == 0){
+                        sendRestartCommand(replicaAddress);
+                    }
+                    else {
+                        CentralRepository.getCentralRepository().getReplicaServer(replicaAddress+":"+Config.rm1Port).reduceLifeLine();
+                    }
+                };
             }
         }
     }
@@ -111,8 +136,6 @@ public class FrontEndQuery implements Runnable {
                     Frontend.frontEndSocket.receive(datagramPacket);
                     Frontend.frontEndSocket.setSoTimeout(0);
                     replicaList.remove(datagramPacket.getAddress().getHostAddress());
-
-
                     long endTime = System.currentTimeMillis();
                     long timeTaken = endTime - startTime;
                     if (delayTime == 1000){
@@ -125,7 +148,8 @@ public class FrontEndQuery implements Runnable {
                         queryResponse = res;
                     }
                     System.out.println(datagramPacket.getAddress().getHostAddress()+":::"+res);
-//                    responseReplicaHash.put(datagramPacket.getAddress().getHostAddress(),res);
+                    responseReplicaHash.put(datagramPacket.getAddress().getHostAddress(),res);
+
                     arrayList.add(res);
                     answerCount.put(res,answerCount.getOrDefault(res,0)+1);
                 }
@@ -193,9 +217,6 @@ public class FrontEndQuery implements Runnable {
                     if (i != j) {
                         String[] set2 = getSetOfItems(getRawDataFromResponse(answers.get(j)));
                         if (compareArrays(set2, set1)) {
-                            System.out.println(answers.get(i));
-                            System.out.println("AND");
-                            System.out.println(answers.get(j));
                             votes.put(answers.get(i), votes.get(answers.get(i)) + 1);
                         }
                     }
