@@ -22,6 +22,8 @@ potentially a number of clients will send requests synchronously as a
 web service to the Front End. The Front End will reliably send that
 request to a failure free sequencer.
 
+![architecture](/docs/ARCH.png)
+
 The sequencer will attach a unique id and sequence number to the request
 and n-unicast or basic multicast it to a group of RMs. Each RM will
 execute that request and send the reply back to FE which will then send
